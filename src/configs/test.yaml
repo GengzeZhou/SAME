@@ -1,0 +1,14 @@
+experiment:
+  id: "test"
+  test: true
+  resume_file: null  # Specify path to your checkpoint, e.g., "output/TaskMoE-multi-q/ckpts/epoch_xx.pt"
+
+training:
+  val_batch_size: 32
+  workers: 4
+
+model:
+  # use_moe_layer: false
+  moe_position: "Attn_q"
+  pretrained_ckpt: "../data/pretrain/Attnq_pretrained_ckpt.pt"
+  task_routing_feature: "multi"

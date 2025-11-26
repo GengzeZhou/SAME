@@ -1,0 +1,138 @@
+import os
+import json
+import numpy as np
+from tqdm import tqdm
+from .mp3d_dataset import MP3DDataset
+from utils.eval_utils import cal_dtw, cal_cls
+from collections import defaultdict
+ERROR_MARGIN = 3.0
+
+class RXRDataset(MP3DDataset):
+    name = "rxr-en"
+
+    def load_data(self, anno_file, max_instr_len=200, debug=False):
+        """
+        :param anno_file:
+        :param max_instr_len:
+        :param debug:
+        :return:
+        """
+        with open(str(anno_file), "r") as f:
+            data = json.load(f)
+        max_instr_len = 512
+        new_data = []
+        sample_index = 0
+
+        data = tqdm(data, desc="Loading data")
+        for i, item in enumerate(data):
+            # Split multiple instructions into separate entries
+            if 'instructions' not in item:
+                item['instructions'] = [item['instruction']]
+                item['instr_encodings'] = [item['instr_encoding']]
+
+            for j, instr in enumerate(item['instructions']):
+                new_item = dict(item)
+                new_item['raw_idx'] = i
+                new_item['sample_idx'] = sample_index
+                new_item['instr_id'] = 'rxr-en_{}_{}'.format(item['path_id'], item['instrucion_id'] if 'instrucion_id' in item else j)
+
+                new_item['instruction'] = instr
+                del new_item['instructions']
+
+                new_item['instr_encoding'] = item['instr_encodings'][j][:max_instr_len]
+                del new_item['instr_encodings']
+
+                new_item['data_type'] = 'rxr-en'
+                new_data.append(new_item)
+                sample_index += 1
+
+        if debug:
+            new_data = new_data[:20]
+
+        gt_trajs = {
+            x['instr_id']: (x['scan'], x['path']) \
+            for x in new_data if len(x['path']) > 1
+        }
+        return new_data, gt_trajs
+
+
+    def eval_metrics(self, preds, logger, name):
+        """
+        Evaluate each agent trajectory based on how close it got to the goal location
+        the path contains [view_id, angle, vofv]
+        :param preds:
+        :param logger:
+        :param name:
+        :return:
+        """
+        logger.info('Evaluated %d predictions' % (len(preds)))
+        metrics = defaultdict(list)
+
+        for item in preds:
+            instr_id = item['instr_id']
+            traj = item['trajectory']
+            scan, gt_traj = self.gt_trajs[instr_id]
+            traj_scores = self.eval_dis_item(scan, traj, gt_traj)
+            for k, v in traj_scores.items():
+                metrics[k].append(v)
+            metrics['instr_id'].append(instr_id)
+
+        avg_metrics = {
+            'action_steps': np.mean(metrics['action_steps']),
+            'steps': np.mean(metrics['trajectory_steps']),
+            'lengths': np.mean(metrics['trajectory_lengths']),
+            'nav_error': np.mean(metrics['nav_error']),
+            'oracle_error': np.mean(metrics['oracle_error']),
+            'sr': np.mean(metrics['success']) * 100,
+            'oracle_sr': np.mean(metrics['oracle_success']) * 100,
+            'spl': np.mean(metrics['spl']) * 100,
+            'nDTW': np.mean(metrics['nDTW']) * 100,
+            'SDTW': np.mean(metrics['SDTW']) * 100,
+            'CLS': np.mean(metrics['CLS']) * 100,
+        }
+
+        return avg_metrics, metrics
+
+    def eval_dis_item(self, scan, pred_path, gt_path):
+        scores = {}
+
+        shortest_distances = self.environments['mattersim']["shortest_distances"][scan]
+
+        path = sum(pred_path, [])
+        assert gt_path[0] == path[0], 'Result trajectories should include the start position'
+
+        nearest_position = self.get_nearest(shortest_distances, gt_path[-1], path)
+
+        scores['nav_error'] = shortest_distances[path[-1]][gt_path[-1]]
+        scores['oracle_error'] = shortest_distances[nearest_position][gt_path[-1]]
+
+        scores['action_steps'] = len(pred_path) - 1
+        scores['trajectory_steps'] = len(path) - 1
+        scores['trajectory_lengths'] = np.sum([shortest_distances[a][b] for a, b in zip(path[:-1], path[1:])])
+
+        gt_lengths = np.sum([shortest_distances[a][b] for a, b in zip(gt_path[:-1], gt_path[1:])])
+
+        scores['success'] = float(scores['nav_error'] < ERROR_MARGIN)
+        scores['oracle_success'] = float(scores['oracle_error'] < ERROR_MARGIN)
+        
+        scores['spl'] = scores['success'] * gt_lengths / max(scores['trajectory_lengths'], gt_lengths, 0.01)
+        scores.update(
+            cal_dtw(shortest_distances, path, gt_path, scores['success'], ERROR_MARGIN)
+        )
+        scores['CLS'] = cal_cls(shortest_distances, path, gt_path, ERROR_MARGIN)
+
+        return scores
+
+    def save_json(self, results, path, item_metrics=None):
+        if item_metrics is not None:
+            for k in item_metrics:
+                for item, v in zip(results, item_metrics[k]):
+                    item[k] = v
+
+        for item in results:
+            item['instr_id'] = "_".join(item['instr_id'].split("_")[1:])
+            item['trajectory'] = [[y, 0, 0] for x in item['trajectory'] for y in x]
+
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w') as fout:
+            json.dump(results, fout)

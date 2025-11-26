@@ -1,0 +1,26 @@
+# Experiment 1 overrides
+experiment:
+  id: "TaskMoE-cls-kv"
+  seed: 42
+  eval_first: true
+  use_neptune: false
+  neptune_project: null         # e.g., "your-workspace/your-project"
+  tags: ["moe_coef_0.8", "TaskMoE-cls", "w/ SCALEVLN", "Attn_kv"]
+
+training:
+  batch_size: 16
+  val_batch_size: 32
+  workers: 4
+
+model:
+  moe_position: "Attn_kv"
+  pretrained_ckpt: "../data/pretrain/Attnkv_pretrained_ckpt.pt"
+  task_routing_feature: "cls"
+
+task:
+  source:                      # Source datasets for training
+    ['R2R_SCALEVLN', 'R2R_PREVALENT', 'R2R', 'REVERIE_SCALEVLN', 'REVERIE', 'RXR-EN', 'CVDN', 'SOON', 'OBJNAV_MP3D']
+  val_source:                  # Source datasets for testing
+    ['RXR-EN', 'R2R', 'REVERIE', 'CVDN', 'SOON', 'OBJNAV_MP3D']
+  ratio:                       # Training ratio of each dataset
+    [10, 1, 1, 1, 1, 1, 1, 1, 2]

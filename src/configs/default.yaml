@@ -1,0 +1,279 @@
+# General Experiment Configuration
+experiment:
+  id: "default"                # Experiment ID
+  output_dir: "output"         # Directory for output/experiment ID
+  data_dir: "../data"          # Root directory for the datasets
+  seed: 0                      # Random seed for reproducibility
+  max_saved_ckpts: 1           # Maximum number of saved checkpoints
+  eval_first: false            # Evaluate before training
+  debug: false                 # Debug mode
+  test: false                  # Test mode
+  submit: false                # Submission mode
+  no_backtrack: false          # Disable backtracking
+  detailed_output: false       # Enable detailed output
+
+  # Checkpoint Configuration
+  resume_file: null            # Path to resume a trained model
+  resume_optimizer: true       # Whether to resume optimizer state
+  save_latest_states: true     # Save the latest states
+
+  # Logging with Neptune.ai
+  use_neptune: false           # Use Neptune.ai for logging
+  neptune_project: null        # Neptune project name
+  neptune_api_token: null      # Neptune API token
+  tags: []                     # Tags for the experiment
+
+# Agent Configuration
+agent:
+  type: "duet"                 # Agent type
+  ignoreid: -100               # ID to ignore certain actions
+  enc_full_graph: true         # Encode full graph
+  act_visited_nodes: false     # Whether to act on visited nodes
+  fusion: "dynamic"            # Fusion method: global, local, avg, dynamic
+  expl_sample: false           # Exploration sampling
+  expl_max_ratio: 0.6          # Maximum exploration ratio
+  expert_policy: "spl"         # Expert policy choice: spl, ndtw
+
+
+# Model Configuration
+model:
+  fix_lang_embedding: false    # Freeze language embeddings
+  fix_pano_embedding: false    # Freeze panorama embeddings
+  fix_local_branch: false      # Freeze local branch
+  num_l_layers: 9              # Number of language layers
+  num_pano_layers: 2           # Number of panorama layers
+  num_x_layers: 4              # Number of cross-attention layers
+  graph_sprels: true           # Use spatial relations in the graph
+  load_text_features: false    # Load precomputed text features
+  text_feat_size: 2048         # Size of text features
+  gmap_max_action_steps: 100   # Maximum number of action steps in the global map
+  max_instr_len: 80            # Maximum instruction length
+  max_objects: 70              # Maximum number of objects
+  pretrained_ckpt:             # Path to pretrained checkpoint
+    "../data/pretrain/Attnkv_pretrained_ckpt.pt"
+
+  # Mixture of Experts Configuration
+  use_moe_layer: true          # Use mixture of experts layer
+  moe_type: "Task"             # MoE type: Task or Sparse
+  moe_position: "Attn_kv"      # MoE position: Attn_kv, Attn_q or FFN
+  task_routing_feature: "cls"  # Task routing feature: cls, mean, task_id, task_id_cls, task_id_multi or multi
+  num_experts: 8               # Number of experts
+  num_experts_per_tok: 2       # Number of experts per token
+  router_aux_loss_coef: 0.8    # Router auxiliary loss coefficient
+
+  # Dropout Parameters
+  hidden_dropout_prob: 0.1     # Dropout rate
+  attn_dropout_prob: 0.1       # Feature dropout rate
+  feat_dropout: 0.3            # Feature dropout rate
+
+
+# Training Configuration
+training:
+  trainer: "base"              # Trainer type: base, finetune, pretrain
+  iters: 500000                # Number of training iterations
+  num_iters_per_epoch: 5000    # Number of iterations per epoch
+  batch_size: 8                # Training batch size
+  val_batch_size: 8            # Validation batch size
+  accumulate_gradient_steps: 1 # Accumulate gradient steps
+  optimizer: "adamW"           # Optimizer: rms, adam, adamW, sgd
+  learning_rate: 0.00001       # Learning rate
+  weight_decay: 0.0            # Weight decay
+  gradient_clipping: 0.5       # Gradient clipping
+  scheduler: null              # Add if needed
+  num_warmup_steps: 0          # Warmup steps
+  feedback: "sample"           # Feedback method: teacher, sample, argmax
+  train_alg: "dagger"          # Training algorithm: imitation, dagger
+  IL_loss_coef: 0.2            # Teacher forcing coefficient
+  accumulate_IL_grad: true     # Accumulate IL gradients
+  epsilon: 0.1                 # Epsilon parameter for exploration
+  workers: 4                   # Number of data loader workers
+  off_batch_task: false        # Synchronize the task ID across distributed processes
+  use_amp: false               # Use automatic mixed precision
+
+
+# Distributed Training Configuration
+distributed:
+  dist_backend: "nccl"         # Backend choice: nccl, gloo
+  init_method: "env://"        # Initialization method
+  world_size: 1                # Number of processes
+  rank: 0                      # Rank of the current process
+  local_rank: -1               # Local rank of the current process
+  no_set_device_rank: false    # Do not set device rank
+
+
+# Tasks Configuration
+task:
+  source:                      # Source datasets for training
+    ['R2R_SCALEVLN', 'R2R_PREVALENT', 'R2R', 'REVERIE_SCALEVLN', 'REVERIE', 'RXR-EN', 'CVDN', 'SOON', 'OBJNAV_MP3D']
+  val_source:                  # Source datasets for testing
+    ['RXR-EN', 'R2R', 'REVERIE', 'CVDN', 'SOON', 'OBJNAV_MP3D']
+  test_source:                 # Source datasets for testing
+    ['R2R', 'REVERIE', 'CVDN', 'SOON']
+  ratio:                       # Training ratio of each dataset
+    [20, 1, 1, 10, 1, 1, 1, 1, 2]
+  loss_coef: {                 # Loss coefficient for each dataset
+    "R2R": 1.0,
+    "REVERIE": 1.0,
+    "RXR-EN": 1.0,
+    "CVDN": 1.0,
+    "SOON": 1.0,
+    "R2R_PREVALENT": 1.0,
+    "R2R_SCALEVLN": 1.0,
+    "REVERIE_AUG": 1.0,
+    "OBJNAV_MP3D": 1.0
+  }
+  val_max_action_len: {        # Maximum action length for validation
+    "R2R": 15,
+    "REVERIE": 15,
+    "RXR-EN": 30,
+    "CVDN": 30,                # from VLN-SIG
+    "SOON": 20,                # from DUET
+    "OBJNAV_HM3D": 30,
+    "OBJNAV_MP3D": 30
+  }
+  train_max_action_len: {      # Maximum action length for training
+    "R2R": 15,
+    "REVERIE": 15,
+    "RXR-EN": 20,
+    "CVDN": 15,
+    "SOON": 15,
+    "R2R_PREVALENT": 15,
+    "R2R_SCALEVLN": 15,
+    "REVERIE_SCALEVLN": 15,
+    "OBJNAV_MP3D": 20
+  }
+  train_simulation_env: {       # Training simulator, choose from mattersim, habitat
+    "R2R": ["mattersim", "mp3d_habitat"],
+    "REVERIE": "mattersim",
+    "RXR-EN": "mattersim",
+    "CVDN": "mattersim",
+    "SOON": "mattersim",
+    "R2R_PREVALENT": "mattersim",
+    "R2R_SCALEVLN": "hm3d_habitat",
+    "REVERIE_SCALEVLN": "hm3d_habitat",
+    "OBJNAV_MP3D": "mp3d_habitat"
+  }
+  eval_simulation_env: {        # Evaluation simulator, choose from mattersim, habitat
+    "R2R": "mattersim",
+    "REVERIE": "mattersim",
+    "RXR-EN": "mattersim",
+    "CVDN": "mattersim",
+    "SOON": "mattersim",
+    "OBJNAV_MP3D": "mp3d_habitat"
+  }
+  eval_splits: {                # Evaluation splits
+    "R2R": ["val_train_seen", "val_unseen"],
+    "REVERIE": ["val_train_seen", "val_unseen"],
+    "RXR-EN": ["val_unseen"],
+    "CVDN": ["val_unseen"],
+    "SOON": ["val_unseen"],
+    "OBJNAV_MP3D": ["val_train_seen", "mp3d_val"]
+  }
+
+# Simulator Configuration
+simulator:
+  connectivity_dir: {           # Connectivity directory
+    "mattersim": "../data/simulator/connectivity/",
+    "mp3d_habitat": "../data/simulator/habitat_mp3d_connectivity/",
+    "hm3d_habitat": "../data/simulator/habitat_hm3d_connectivity/"
+  }
+  candidate_file_dir: {         # Candidate file directory
+    "mattersim": "../data/simulator/mp3d_scanvp_candidates.json",
+    "mp3d_habitat": "../data/simulator/habitat_mp3d_scanvp_candidates.json",
+    "hm3d_habitat": "../data/simulator/habitat_hm3d_scanvp_candidates.json"
+  }
+  node_location_dir: {          # Node location directory
+    "mattersim": "../data/simulator/mp3d_connectivity_graphs.json",
+    "mp3d_habitat": "../data/simulator/habitat_mp3d_connectivity_graphs.json",
+    "hm3d_habitat": "../data/simulator/habitat_hm3d_connectivity_graphs.json"
+  }
+
+# Feature Configuration
+feature:
+  angle_feat_size: 4            # Size of angle features
+  image_feat_size: 512          # Size of image features
+  obj_feat_size: 768            # Size of object features
+  enable_og: false              # Enable object grounding
+  feature_database:             # Feature database paths
+    "mattersim": "features/img_features/clip_vit-b16_mp3d_hm3d_gibson.hdf5"
+    "mp3d_habitat": "features/img_features/MP3D_habitat_clip_b16.lmdb"
+    "hm3d_habitat": "features/img_features/clip_vit-b16_mp3d_hm3d_gibson.hdf5"
+  object_database:              # Object database paths
+    "reverie": "features/obj_features/reverie_obj_feat"
+    "soon": "features/obj_features/soon_obj_feat"
+
+# Datasets Configuration
+dataset:
+  R2R:                          # Room-to-Room Navigation
+    DIR: "R2R"                  # Dataset directory
+    SPLIT: {                    # Split files
+      "train": "R2R_train_mergesim_enc.json",
+      "val_train_seen": "R2R_val_train_seen_enc.json",
+      "val_seen": "R2R_val_seen_enc.json",
+      "val_unseen": "R2R_val_unseen_enc.json",
+      "test": "R2R_test_enc.json"
+    }
+  REVERIE:                      # REVERIE
+    DIR: "REVERIE"              # Dataset directory
+    bbox_file: "BBoxes.json"    # Bounding box file
+    multi_endpoints: true       # Use multiple endpoints
+    SPLIT: {                    # Split files
+      "train": "REVERIE_train_enc.json",
+      "val_train_seen": "REVERIE_val_train_seen_enc.json",
+      "val_seen": "REVERIE_val_seen_enc.json",
+      "val_unseen": "REVERIE_val_unseen_enc.json",
+      "test": "REVERIE_test_enc.json"
+    }
+  RXR_EN:                       # RXR-EN
+    DIR: "RXR-EN"               # Dataset directory
+    SPLIT: {                    # Split files
+      "train": "RXR-EN_train_enc.json",
+      "val_seen": "RXR-EN_val_seen_enc.json",
+      "val_unseen": "RXR-EN_val_unseen_enc.json",
+    }
+  CVDN:                         # CVDN
+    DIR: "CVDN"                 # Dataset directory
+    path_type: "trusted_path"   # Path type: trusted_path, planner_path
+    SPLIT: {                    # Split files
+      "train": "train.json",
+      "val_seen": "val_seen.json",
+      "val_unseen": "val_unseen.json",
+      "test": "test_cleaned.json"
+    }
+  SOON:                         # SOON
+    DIR: "SOON"                 # from https://github.com/cshizhe/HM3DAutoVLN
+    SPLIT: {                    # Split files
+      "train": "train_enc_pseudo_obj_ade30k_label.jsonl",
+      "val_seen": "val_unseen_instrs_enc_pseudo_obj_ade30k_label.jsonl",
+      "val_unseen": "val_unseen_house_enc_pseudo_obj_ade30k_label.jsonl",
+      "test": "test_v2_enc.jsonl"
+    }  
+  R2R_PREVALENT:                # PREVALENT
+    DIR: "R2R"                  # Dataset directory
+    SPLIT: {                    # Split files
+      "train": "R2R_prevalent_aug_train_enc.json"
+    }
+  R2R_SCALEVLN:                 # SCALEVLN
+    DIR: "R2R"                  # Dataset directory
+    SPLIT: {                    # Split files
+      "train": "R2R_scalevln_aug_train_enc.json"
+    }
+  REVERIE_AUG:                  # Augmented REVERIE
+    DIR: "REVERIE"              # Dataset directory
+    bbox_file: "BBoxes.json"    # Bounding box file
+    SPLIT: {                    # Split files
+      "train": "REVERIE_speaker_aug_enc.jsonl"
+    }
+  REVERIE_SCALEVLN:             # Augmented REVERIE
+    DIR: "REVERIE"              # Dataset directory
+    bbox_file: "BBoxes.json"    # Bounding box file
+    SPLIT: {                    # Split files
+      "train": "REVERIE_scalevln_aug_train_enc.jsonl"
+    }
+  OBJNAV_MP3D:                  # Object Navigation
+    DIR: "MP3D"                 # Dataset directory
+    SPLIT: {                    # Split files
+      "train": "habitatweb/train",
+      "val_train_seen": "habitatweb/val_train_seen",
+      "mp3d_val": "v1/val"
+    }

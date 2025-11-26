@@ -1,0 +1,80 @@
+# Environment variables and secrets
+.env
+.env.local
+*.env
+.neptune/
+
+# Data and checkpoints
+data/
+output/
+*.pt
+*.pth
+*.hdf5
+*.lmdb
+*.h5
+*.pkl
+*.pickle
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# PyTorch
+lightning_logs/
+wandb/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+tmp/
+temp/
+
+# Personal test configs (to prevent committing with absolute paths)
+src/configs/test_local.yaml
+src/configs/*_local.yaml

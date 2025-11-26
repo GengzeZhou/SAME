@@ -1,0 +1,23 @@
+experiment:
+  id: "main-DuET"
+  seed: 42
+  eval_first: true
+  use_neptune: false
+  neptune_project: null         # e.g., "your-workspace/your-project"
+  tags: ["DuET", "w/ SCALEVLN"]
+
+training:
+  batch_size: 16
+  val_batch_size: 32
+  workers: 4
+
+model:
+  use_moe_layer: false
+
+task:
+  source:                      # Source datasets for training
+    ['R2R_SCALEVLN', 'R2R_PREVALENT', 'R2R', 'REVERIE_SCALEVLN', 'REVERIE', 'RXR-EN', 'CVDN', 'SOON', 'OBJNAV_MP3D']
+  val_source:                  # Source datasets for testing
+    ['RXR-EN', 'R2R', 'REVERIE', 'CVDN', 'SOON', 'OBJNAV_MP3D']
+  ratio:                       # Training ratio of each dataset
+    [10, 1, 1, 1, 1, 1, 1, 1, 2]

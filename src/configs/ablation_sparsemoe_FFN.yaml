@@ -1,0 +1,30 @@
+# Experiment 1 overrides
+experiment:
+  id: "SparseMoE-FFN-ablation"
+  seed: 42
+  # use_neptune: false
+  neptune_project: null         # e.g., "your-workspace/your-project"
+  tags: ["moe_coef_0.8", "SparseMoE", "FFN"]
+
+training:
+  batch_size: 4
+  val_batch_size: 8
+  workers: 4
+
+model:
+  moe_position: "FFN"
+  pretrained_ckpt: "../data/pretrain/FFN_pretrained_ckpt.pt"
+  moe_type: "Sparse"
+
+task:
+  source:                      # Source datasets for training
+    ['R2R', 'REVERIE', 'OBJNAV_MP3D']
+  val_source:                  # Source datasets for testing
+    ['R2R', 'REVERIE', 'OBJNAV_MP3D']
+  ratio:                       # Training ratio of each dataset
+    [1, 1, 1]
+  train_simulation_env: {      # Training simulator, choose from mattersim, habitat
+    "R2R": "mattersim",
+    "REVERIE": "mattersim",
+    "OBJNAV_MP3D": "mp3d_habitat"
+  }

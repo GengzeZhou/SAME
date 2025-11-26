@@ -1,0 +1,15 @@
+h5py
+lmdb
+timm
+numpy
+neptune          # for logging, optional
+shapely
+msgpack
+networkx
+jsonlines
+omegaconf
+tensorboard
+transformers
+torch>=1.10.0
+torchvision
+tqdm

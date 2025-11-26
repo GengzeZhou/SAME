@@ -1,0 +1,31 @@
+# Experiment 1 overrides
+experiment:
+  id: "TaskMoE-cls-q-ablation"
+  seed: 42
+  eval_first: true
+  use_neptune: false
+  neptune_project: null         # e.g., "your-workspace/your-project"
+  tags: ["moe_coef_0.8", "TaskMoE-cls", "w/o SCALEVLN", "Attn_q"]
+
+training:
+  batch_size: 8
+  val_batch_size: 16
+  workers: 4
+
+model:
+  moe_position: "Attn_q"
+  pretrained_ckpt: "../data/pretrain/Attnq_pretrained_ckpt.pt"
+  task_routing_feature: "cls"
+
+task:
+  source:                      # Source datasets for training
+    ['R2R', 'REVERIE', 'OBJNAV_MP3D']
+  val_source:                  # Source datasets for testing
+    ['R2R', 'REVERIE', 'OBJNAV_MP3D']
+  ratio:                       # Training ratio of each dataset
+    [1, 1, 1]
+  train_simulation_env: {      # Training simulator, choose from mattersim, habitat
+    "R2R": "mattersim",
+    "REVERIE": "mattersim",
+    "OBJNAV_MP3D": "mp3d_habitat"
+  }
