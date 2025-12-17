@@ -33,11 +33,17 @@ model-index:
       name: Room-to-Room (R2R)
     metrics:
     - type: success_rate
-      value: 0.72
+      value: 76
       name: SR (val_unseen)
     - type: spl
-      value: 0.63
+      value: 66
       name: SPL (val_unseen)
+    - type: success_rate
+      value: 74
+      name: SR (test_unseen)
+    - type: spl
+      value: 64
+      name: SPL (test_unseen)
   - task:
       type: visual-navigation
       name: Vision-and-Language Navigation
@@ -46,11 +52,75 @@ model-index:
       name: REVERIE
     metrics:
     - type: success_rate
-      value: 0.55
+      value: 46.4
       name: SR (val_unseen)
     - type: spl
-      value: 0.37
+      value: 36.1
       name: SPL (val_unseen)
+    - type: success_rate
+      value: 48.6
+      name: SR (test_unseen)
+    - type: spl
+      value: 37.1
+      name: SPL (test_unseen)
+  - task:
+      type: visual-navigation
+      name: Multilingual VLN
+    dataset:
+      type: RXR
+      name: RxR-EN
+    metrics:
+    - type: success_rate
+      value: 50.5
+      name: SR (val_unseen)
+    - type: ndtw
+      value: 51.2
+      name: nDTW (val_unseen)
+  - task:
+      type: visual-navigation
+      name: Dialog Navigation
+    dataset:
+      type: CVDN
+      name: CVDN
+    metrics:
+    - type: goal_progress
+      value: 6.94
+      name: GP (val)
+    - type: goal_progress
+      value: 7.07
+      name: GP (test)
+  - task:
+      type: visual-navigation
+      name: Object-Oriented Navigation
+    dataset:
+      type: SOON
+      name: SOON
+    metrics:
+    - type: success_rate
+      value: 36.1
+      name: SR (val_unseen)
+    - type: spl
+      value: 25.4
+      name: SPL (val_unseen)
+    - type: success_rate
+      value: 38.2
+      name: SR (test_unseen)
+    - type: spl
+      value: 27.1
+      name: SPL (test_unseen)
+  - task:
+      type: object-navigation
+      name: Object Navigation
+    dataset:
+      type: ObjectNav-MP3D
+      name: ObjectNav-MP3D
+    metrics:
+    - type: success_rate
+      value: 76.3
+      name: SR (val)
+    - type: spl
+      value: 42.7
+      name: SPL (val)
 ---
 
 # SAME: State-Adaptive Mixture of Experts for Language-Guided Visual Navigation
@@ -208,28 +278,60 @@ SAME is trained on 9 navigation datasets with weighted sampling:
 
 ## Evaluation Results
 
-### Room-to-Room (R2R)
+SAME achieves state-of-the-art or highly competitive performance across all navigation benchmarks as a **unified model**, outperforming task-specific approaches in many cases.
 
-| Split | SR | SPL | nDTW |
-|-------|-----|-----|------|
-| val_seen | 0.78 | 0.72 | 0.79 |
-| val_unseen | 0.72 | 0.63 | 0.70 |
+### Main Results (Unified Model)
 
-### REVERIE
+#### Room-to-Room (R2R)
 
-| Split | SR | SPL | RGS |
-|-------|-----|-----|-----|
-| val_seen | 0.62 | 0.55 | 0.45 |
-| val_unseen | 0.55 | 0.37 | 0.32 |
+| Split | SR ↑ | SPL ↑ |
+|-------|------|-------|
+| Val Unseen | **76** | 66 |
+| Test Unseen | **74** | **64** |
+
+#### REVERIE
+
+| Split | SR ↑ | SPL ↑ |
+|-------|------|-------|
+| Val Unseen | **46.4** | **36.1** |
+| Test Unseen | **48.6** | **37.1** |
+
+#### RxR-EN (Multilingual VLN)
+
+| Split | SR ↑ | nDTW ↑ |
+|-------|------|--------|
+| Val Unseen | **50.5** | **51.2** |
+
+#### CVDN (Dialog Navigation)
+
+| Split | GP ↑ |
+|-------|------|
+| Val | **6.94** |
+| Test | 7.07 |
+
+#### SOON (Object-Oriented Navigation)
+
+| Split | SR ↑ | SPL ↑ |
+|-------|------|-------|
+| Val Unseen | 36.1 | 25.4 |
+| Test Unseen | **38.2** | **27.1** |
+
+#### ObjectNav-MP3D
+
+| Split | SR ↑ | SPL ↑ |
+|-------|------|-------|
+| Val | **76.3** | 42.7 |
+
+**Bold** indicates best performance among unified models. SAME achieves the best overall performance across all tasks with a single model.
 
 ### Evaluation Metrics
 
 - **SR (Success Rate)**: Percentage of successful navigations (within 3m of goal)
-- **SPL (Success weighted by Path Length)**: Efficiency-weighted success
+- **SPL (Success weighted by Path Length)**: Efficiency-weighted success rate
 - **nDTW (normalized Dynamic Time Warping)**: Path similarity to ground truth
-- **SDTW**: Success-weighted nDTW
+- **GP (Goal Progress)**: Progress towards the goal in dialog navigation
 - **NE (Navigation Error)**: Distance to goal at episode end
-- **OSR (Oracle Success Rate)**: Success with oracle stop action
+- **OSR (Oracle Success Rate)**: Success rate with oracle stop action
 
 ## Model Variants
 
