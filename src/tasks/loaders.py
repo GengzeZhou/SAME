@@ -262,7 +262,7 @@ def create_dataloaders(
     # load datasets
     if config.experiment.test:
         dataset_list = task_cfg.test_source
-    elif task_cfg.val_source is None and not training:
+    elif task_cfg.val_source is not None and not training:
         dataset_list = task_cfg.val_source
     else:
         dataset_list = copy.deepcopy(task_cfg.source)
