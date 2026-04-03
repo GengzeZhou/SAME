@@ -39,7 +39,7 @@ def setup_seeds(seed=0):
 def parse_args():
     parser = argparse.ArgumentParser(description="Experiment runner with OmegaConf")
 
-    parser.add_argument('--config_dir', type=str, default='configs/experiment1.yaml', help="Path to the experiment config file")
+    parser.add_argument('--config_dir', type=str, default='configs/main_multi_q.yaml', help="Path to the experiment config file")
     # Option to override specific configurations using key-value pairs
     parser.add_argument(
         "--options",
@@ -66,14 +66,18 @@ def parse_args():
     # Apply overrides using the options argument
     if args.options:
         for kv in args.options:
-            key, value = kv.split("=")
+            key, value = kv.split("=", 1)
             # value is a string, try to convert it to the correct type
             if value in ['True', 'False']:
                 value = True if value == 'True' else False
-            elif value.isdigit():
-                value = int(value)
-            elif '.' in value and all([x.isdigit() for x in value.split('.')]):
-                value = float(value)
+            else:
+                try:
+                    value = int(value)
+                except ValueError:
+                    try:
+                        value = float(value)
+                    except ValueError:
+                        pass
             OmegaConf.update(config, key, value)
 
     return config
